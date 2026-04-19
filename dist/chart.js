@@ -1,132 +1,46 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+// Text-based chart visualization
+// Railway doesn't support native modules - using ASCII/text charts instead
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateTextPieChart = generateTextPieChart;
+exports.generateTextBarChart = generateTextBarChart;
 exports.generatePieChart = generatePieChart;
 exports.generateBarChart = generateBarChart;
 exports.cleanupChart = cleanupChart;
-const chart_js_1 = require("chart.js");
-const canvas_1 = require("canvas");
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-// Register Chart.js components
-chart_js_1.Chart.register(...chart_js_1.registerables);
-const DEFAULT_COLORS = [
-    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
-];
-async function generatePieChart(data) {
+function generateTextPieChart(data) {
     const { labels, values, title } = data;
-    const colors = data.colors || DEFAULT_COLORS.slice(0, labels.length);
-    // Create canvas
-    const width = 600;
-    const height = 400;
-    const canvas = (0, canvas_1.createCanvas)(width, height);
-    const ctx = canvas.getContext('2d');
-    const config = {
-        type: 'pie',
-        data: {
-            labels,
-            datasets: [{
-                    data: values,
-                    backgroundColor: colors,
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-        },
-        options: {
-            responsive: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        font: { size: 14 },
-                        color: '#333333'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: title,
-                    font: { size: 18, weight: 'bold' },
-                    color: '#333333'
-                }
-            }
-        }
-    };
-    const chart = new chart_js_1.Chart(ctx, config);
-    chart.update();
-    // Save to file
-    const tempDir = process.env.TEMP_DIR || './data';
-    if (!fs_1.default.existsSync(tempDir)) {
-        fs_1.default.mkdirSync(tempDir, { recursive: true });
+    const total = values.reduce((a, b) => a + b, 0);
+    let result = `📊 *${title}*\n\n`;
+    const emojis = ['🟣', '🔵', '🟡', '🟢', '🟣', '🟠', '⚫', '⚪'];
+    for (let i = 0; i < labels.length; i++) {
+        const percent = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0';
+        const barLength = Math.round((values[i] / total) * 20);
+        const bar = '█'.repeat(barLength) + '░'.repeat(20 - barLength);
+        result += `${emojis[i % emojis.length]} ${labels[i]}\n`;
+        result += `   ${bar} ${percent}%\n`;
+        result += `   Rp ${values[i].toLocaleString('id-ID')}\n\n`;
     }
-    const filePath = path_1.default.join(tempDir, `chart_${Date.now()}.png`);
-    const buffer = canvas.toBuffer('image/png');
-    fs_1.default.writeFileSync(filePath, buffer);
-    chart.destroy();
-    return filePath;
+    return result;
+}
+function generateTextBarChart(data) {
+    const { labels, values, title } = data;
+    const maxValue = Math.max(...values);
+    let result = `📊 *${title}*\n\n`;
+    for (let i = 0; i < labels.length; i++) {
+        const barLength = maxValue > 0 ? Math.round((values[i] / maxValue) * 20) : 0;
+        const bar = '▓'.repeat(barLength) + '░'.repeat(20 - barLength);
+        result += `${labels[i]}\n`;
+        result += `   ${bar} Rp ${values[i].toLocaleString('id-ID')}\n\n`;
+    }
+    return result;
+}
+async function generatePieChart(data) {
+    return generateTextPieChart(data);
 }
 async function generateBarChart(data) {
-    const { labels, values, title } = data;
-    const colors = data.colors || DEFAULT_COLORS.slice(0, labels.length);
-    const width = 600;
-    const height = 400;
-    const canvas = (0, canvas_1.createCanvas)(width, height);
-    const ctx = canvas.getContext('2d');
-    const config = {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                    label: title,
-                    data: values,
-                    backgroundColor: colors,
-                    borderWidth: 1,
-                    borderColor: '#333333'
-                }]
-        },
-        options: {
-            responsive: false,
-            plugins: {
-                legend: { display: false },
-                title: {
-                    display: true,
-                    text: title,
-                    font: { size: 18, weight: 'bold' },
-                    color: '#333333'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: (value) => 'Rp ' + Number(value).toLocaleString('id-ID')
-                    }
-                }
-            }
-        }
-    };
-    const chart = new chart_js_1.Chart(ctx, config);
-    chart.update();
-    const tempDir = process.env.TEMP_DIR || './data';
-    if (!fs_1.default.existsSync(tempDir)) {
-        fs_1.default.mkdirSync(tempDir, { recursive: true });
-    }
-    const filePath = path_1.default.join(tempDir, `chart_${Date.now()}.png`);
-    const buffer = canvas.toBuffer('image/png');
-    fs_1.default.writeFileSync(filePath, buffer);
-    chart.destroy();
-    return filePath;
+    return generateTextBarChart(data);
 }
-async function cleanupChart(filePath) {
-    try {
-        if (fs_1.default.existsSync(filePath)) {
-            fs_1.default.unlinkSync(filePath);
-        }
-    }
-    catch (err) {
-        console.error('Error cleaning up chart:', err);
-    }
+async function cleanupChart(_filePath) {
+    // No cleanup needed for text charts
 }
 //# sourceMappingURL=chart.js.map

@@ -97,14 +97,13 @@ function registerCommands(bot) {
             await ctx.reply(message, { parse_mode: 'Markdown' });
             // Generate bar chart for income vs expense
             try {
-                const chartPath = await (0, chart_1.generateBarChart)({
+                const chartText = await (0, chart_1.generateBarChart)({
                     labels: ['Pemasukan', 'Pengeluaran'],
                     values: [stats.income, stats.expense],
                     colors: ['#36A2EB', '#FF6384'],
                     title: `${monthName}`
                 });
-                await ctx.replyWithPhoto({ source: chartPath });
-                await (0, chart_1.cleanupChart)(chartPath);
+                await ctx.reply(chartText, { parse_mode: 'Markdown' });
             }
             catch (chartErr) {
                 console.error('Error generating report chart:', chartErr);
@@ -148,13 +147,12 @@ function registerCommands(bot) {
             // Generate and send pie chart for expenses
             if (expenseCats.length > 0) {
                 try {
-                    const chartPath = await (0, chart_1.generatePieChart)({
+                    const chartText = await (0, chart_1.generatePieChart)({
                         labels: expenseCats.map(c => c.category),
                         values: expenseCats.map(c => c.total),
                         title: 'Pengeluaran per Kategori'
                     });
-                    await ctx.replyWithPhoto({ source: chartPath });
-                    await (0, chart_1.cleanupChart)(chartPath);
+                    await ctx.reply(chartText, { parse_mode: 'Markdown' });
                 }
                 catch (chartErr) {
                     console.error('Error generating expense chart:', chartErr);
@@ -163,13 +161,12 @@ function registerCommands(bot) {
             // Generate and send pie chart for income
             if (incomeCats.length > 0) {
                 try {
-                    const chartPath = await (0, chart_1.generatePieChart)({
+                    const chartText = await (0, chart_1.generatePieChart)({
                         labels: incomeCats.map(c => c.category),
                         values: incomeCats.map(c => c.total),
                         title: 'Pemasukan per Kategori'
                     });
-                    await ctx.replyWithPhoto({ source: chartPath });
-                    await (0, chart_1.cleanupChart)(chartPath);
+                    await ctx.reply(chartText, { parse_mode: 'Markdown' });
                 }
                 catch (chartErr) {
                     console.error('Error generating income chart:', chartErr);

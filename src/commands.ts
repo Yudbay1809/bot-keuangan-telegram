@@ -1,7 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { MyContext, TempTransactionData } from './types';
 import { getOrCreateUser, getCategories, addTransaction, getTransactions, deleteTransaction, getMonthlyStats, getCategoryStats } from './database';
-import { generatePieChart, generateBarChart, cleanupChart } from './chart';
+import { generatePieChart, generateBarChart } from './chart';
 import fs from 'fs';
 import path from 'path';
 
@@ -119,15 +119,14 @@ export function registerCommands(bot: Telegraf<MyContext>): void {
       
       // Generate bar chart for income vs expense
       try {
-        const chartPath = await generateBarChart({
+        const chartText = await generateBarChart({
           labels: ['Pemasukan', 'Pengeluaran'],
           values: [stats.income, stats.expense],
           colors: ['#36A2EB', '#FF6384'],
           title: `${monthName}`
         });
         
-        await ctx.replyWithPhoto({ source: chartPath });
-        await cleanupChart(chartPath);
+        await ctx.reply(chartText, { parse_mode: 'Markdown' });
       } catch (chartErr) {
         console.error('Error generating report chart:', chartErr);
       }
@@ -178,14 +177,13 @@ export function registerCommands(bot: Telegraf<MyContext>): void {
       // Generate and send pie chart for expenses
       if (expenseCats.length > 0) {
         try {
-          const chartPath = await generatePieChart({
+          const chartText = await generatePieChart({
             labels: expenseCats.map(c => c.category),
             values: expenseCats.map(c => c.total),
             title: 'Pengeluaran per Kategori'
           });
           
-          await ctx.replyWithPhoto({ source: chartPath });
-          await cleanupChart(chartPath);
+          await ctx.reply(chartText, { parse_mode: 'Markdown' });
         } catch (chartErr) {
           console.error('Error generating expense chart:', chartErr);
         }
@@ -194,14 +192,13 @@ export function registerCommands(bot: Telegraf<MyContext>): void {
       // Generate and send pie chart for income
       if (incomeCats.length > 0) {
         try {
-          const chartPath = await generatePieChart({
+          const chartText = await generatePieChart({
             labels: incomeCats.map(c => c.category),
             values: incomeCats.map(c => c.total),
             title: 'Pemasukan per Kategori'
           });
           
-          await ctx.replyWithPhoto({ source: chartPath });
-          await cleanupChart(chartPath);
+          await ctx.reply(chartText, { parse_mode: 'Markdown' });
         } catch (chartErr) {
           console.error('Error generating income chart:', chartErr);
         }
