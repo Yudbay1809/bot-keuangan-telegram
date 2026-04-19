@@ -4,9 +4,9 @@
   "description": "Bot Keuangan Telegram untuk mencatat pemasukan dan pengeluaran",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "dev": "npx ts-node src/index.ts",
     "clean": "rm -rf dist"
   },
   "keywords": ["telegram", "bot", "expense", "finance", "indonesian"],
