@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { DEFAULT_CATEGORIES, Category, User, Transaction } from './types';
 
-const DB_PATH = process.env.DB_PATH || './data/keuangan.db';
+const DB_PATH = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/data/keuangan.db' : './data/keuangan.db');
 
 let db: Database.Database;
 

@@ -23,6 +23,16 @@ npm run build
 npm start
 ```
 
+## Deployment Railway (SQLite Persisten)
+
+Gunakan Volume agar data tidak hilang saat redeploy/restart:
+
+1. Tambah Volume di service Railway.
+2. Mount path Volume ke `/data`.
+3. Set environment variable:
+   - `BOT_TOKEN=...`
+   - `DB_PATH=/data/keuangan.db`
+
 ## Cara Menggunakan
 
 1. Buat bot baru dari @BotFather di Telegram
