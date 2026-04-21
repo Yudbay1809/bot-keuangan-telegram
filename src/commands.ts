@@ -174,33 +174,18 @@ export function registerCommands(bot: Telegraf<MyContext>): void {
       
       await ctx.reply(message, { parse_mode: 'Markdown' });
       
-      // Generate and send pie chart for expenses
-      if (expenseCats.length > 0) {
+      // Generate one pie chart: Income vs Expense
+      if (totalIncome > 0 || totalExpense > 0) {
         try {
           const chartText = await generatePieChart({
-            labels: expenseCats.map(c => c.category),
-            values: expenseCats.map(c => c.total),
-            title: 'Pengeluaran per Kategori'
+            labels: ['Pemasukan', 'Pengeluaran'],
+            values: [totalIncome, totalExpense],
+            title: 'Pemasukan vs Pengeluaran'
           });
           
           await ctx.reply(chartText, { parse_mode: 'Markdown' });
         } catch (chartErr) {
-          console.error('Error generating expense chart:', chartErr);
-        }
-      }
-      
-      // Generate and send pie chart for income
-      if (incomeCats.length > 0) {
-        try {
-          const chartText = await generatePieChart({
-            labels: incomeCats.map(c => c.category),
-            values: incomeCats.map(c => c.total),
-            title: 'Pemasukan per Kategori'
-          });
-          
-          await ctx.reply(chartText, { parse_mode: 'Markdown' });
-        } catch (chartErr) {
-          console.error('Error generating income chart:', chartErr);
+          console.error('Error generating chart:', chartErr);
         }
       }
     } catch (err) {
