@@ -3,6 +3,7 @@ import path from 'path';
 import { DEFAULT_CATEGORIES, Category, User, Transaction } from './types';
 
 const DB_PATH = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/data/keuangan.db' : './data/keuangan.db');
+const SQLITE_JOURNAL_MODE = (process.env.SQLITE_JOURNAL_MODE || (process.env.RAILWAY_ENVIRONMENT ? 'DELETE' : 'WAL')).toUpperCase();
 
 let db: Database.Database;
 
@@ -14,6 +15,11 @@ export function getDb(): Database.Database {
 }
 
 export function initDatabase(): void {
+  console.log(`[DB] Using database path: ${DB_PATH}`);
+  if (process.env.RAILWAY_ENVIRONMENT && !DB_PATH.startsWith('/data/')) {
+    console.warn(`[DB] Warning: running on Railway but DB_PATH is not under /data (${DB_PATH}). Data may be ephemeral.`);
+  }
+
   // Ensure data directory exists
   const fs = require('fs');
   const dataDir = path.dirname(DB_PATH);
@@ -22,7 +28,9 @@ export function initDatabase(): void {
   }
 
   db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
+  const appliedJournalMode = db.pragma(`journal_mode = ${SQLITE_JOURNAL_MODE}`, { simple: true }) as string;
+  db.pragma('busy_timeout = 5000');
+  console.log(`[DB] journal_mode=${appliedJournalMode}`);
 
   // Create tables
   db.exec(`
@@ -65,6 +73,11 @@ export function initDatabase(): void {
       insertCat.run(null, cat.name, cat.emoji);
     }
   }
+
+  const info = db.pragma('database_list') as Array<{ name: string; file: string }>;
+  const txCount = db.prepare('SELECT COUNT(*) as count FROM transactions').get() as { count: number };
+  console.log(`[DB] Opened file: ${info.find(i => i.name === 'main')?.file || DB_PATH}`);
+  console.log(`[DB] Existing transactions: ${txCount.count}`);
 }
 
 // User operations
@@ -74,6 +87,15 @@ export function getOrCreateUser(userId: number, name: string, username?: string)
 
   db.prepare('INSERT INTO users (id, name, username) VALUES (?, ?, ?)').run(userId, name, username || null);
   return db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User;
+}
+
+export function getAllUsers(): User[] {
+  return db.prepare('SELECT * FROM users ORDER BY created_at DESC').all() as User[];
+}
+
+export function getUserTransactionCount(userId: number): number {
+  const result = db.prepare('SELECT COUNT(*) as count FROM transactions WHERE user_id = ?').get(userId) as { count: number };
+  return result.count;
 }
 
 // Category operations

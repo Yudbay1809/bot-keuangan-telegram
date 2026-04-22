@@ -1,6 +1,6 @@
 import { Telegraf, Markup } from 'telegraf';
 import { MyContext, TempTransactionData } from './types';
-import { getOrCreateUser, getCategories, addTransaction, getTransactions, deleteTransaction, getMonthlyStats, getCategoryStats } from './database';
+import { getOrCreateUser, getCategories, addTransaction, getTransactions, deleteTransaction, getMonthlyStats, getCategoryStats, getAllUsers, getUserTransactionCount } from './database';
 import { generatePieChart, generateBarChart } from './chart';
 import fs from 'fs';
 import path from 'path';
@@ -248,6 +248,36 @@ export function registerCommands(bot: Telegraf<MyContext>): void {
       }
     } catch (err) {
       console.error('Error /delete:', err);
+      await ctx.reply('Terjadi kesalahan.');
+    }
+  });
+
+  // Users command - list all users
+  bot.command('users', async (ctx) => {
+    try {
+      const allUsers = getAllUsers();
+      
+      if (allUsers.length === 0) {
+        await ctx.reply('Belum ada user yang menggunakan bot.');
+        return;
+      }
+      
+      let message = `👥 *Daftar User Bot*\n\n`;
+      message += `Total: ${allUsers.length} user\n\n`;
+      
+      for (const user of allUsers) {
+        const txCount = getUserTransactionCount(user.id);
+        const username = user.username ? `@${user.username}` : '-';
+        message += `👤 ${user.name}\n`;
+        message += `   Username: ${username}\n`;
+        message += `   ID: ${user.id}\n`;
+        message += `   Transaksi: ${txCount}\n`;
+        message += `   Bergabung: ${user.created_at}\n\n`;
+      }
+      
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error('Error /users:', err);
       await ctx.reply('Terjadi kesalahan.');
     }
   });
